@@ -11,6 +11,21 @@
   --amber: #b7791f;
   --amber-soft: #f7eddc;
   --danger: #b4372f;
+  --glyph-on: var(--verdigris);
+  --glyph-empty: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+
+.theme-dark {
+  --paper: #131a24;
+  --surface: #1a2330;
+  --ink: #e4e9f0;
+  --muted: #97a3b4;
+  --line: #2c3746;
+  --verdigris: #4fb8a6;
+  --verdigris-soft: #1b3a37;
+  --glyph-on: #5fd0bc;
+  --glyph-empty: rgb(255 255 255 / 0.05);
+  color: var(--ink);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,6 +40,8 @@
     --amber: #e0a94e;
     --amber-soft: #3a2f1c;
     --danger: #e7766d;
+    --glyph-on: #5fd0bc;
+    --glyph-empty: rgb(255 255 255 / 0.05);
   }
 }
 
@@ -46,6 +63,43 @@
 body {
   background: var(--paper);
   color: var(--ink);
+}
+
+.deep-surface {
+  background: #18202c;
+}
+
+.auth-panel {
+  background: #18202c;
+}
+
+@media (prefers-color-scheme: dark) {
+  .deep-surface {
+    background: #0c1118;
+    box-shadow: inset 0 0 0 1px #263142;
+  }
+
+  .auth-panel {
+    background: #0c1118;
+    box-shadow: inset 1px 0 0 #263142;
+  }
+}
+
+.glyph-cell {
+  transition:
+    fill 500ms ease,
+    fill-opacity 500ms ease;
+}
+
+.block-in {
+  animation: block-in 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes block-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
 }
 
 :focus-visible {
