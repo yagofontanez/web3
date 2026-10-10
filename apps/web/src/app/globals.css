@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f4f6f8;
+  --surface: #ffffff;
+  --ink: #18202c;
+  --muted: #5b6676;
+  --line: #d8dee6;
+  --verdigris: #1c7f70;
+  --verdigris-soft: #e3f1ee;
+  --amber: #b7791f;
+  --amber-soft: #f7eddc;
+  --danger: #b4372f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131a24;
+    --surface: #1a2330;
+    --ink: #e4e9f0;
+    --muted: #97a3b4;
+    --line: #2c3746;
+    --verdigris: #4fb8a6;
+    --verdigris-soft: #1b3a37;
+    --amber: #e0a94e;
+    --amber-soft: #3a2f1c;
+    --danger: #e7766d;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-verdigris: var(--verdigris);
+  --color-verdigris-soft: var(--verdigris-soft);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--verdigris);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
