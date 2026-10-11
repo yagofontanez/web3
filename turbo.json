@@ -3,7 +3,7 @@
   "globalEnv": ["NODE_ENV"],
   "globalDependencies": [".env"],
   "tasks": {
-    "build": { "dependsOn": ["^build"], "outputs": [".next/**", "!.next/cache/**", "dist/**"], "env": ["DATABASE_URL", "REDIS_URL", "BETTER_AUTH_*", "NEXT_PUBLIC_*", "API_*"] },
+    "build": { "dependsOn": ["^build"], "outputs": [".next/**", "!.next/cache/**", "dist/**"], "env": ["DATABASE_URL", "REDIS_URL", "BETTER_AUTH_*", "NEXT_PUBLIC_*", "API_*", "ALCHEMY_API_KEY", "ETHERSCAN_API_KEY"] },
     "dev": { "cache": false, "persistent": true },
     "lint": {},
     "typecheck": { "dependsOn": ["^typecheck"] },

@@ -23,6 +23,7 @@ apps/
 packages/
   db/       Drizzle schema + migrations
   shared/   RBAC roles & permissions (shared by web, api, worker)
+  explorer/ portfolio, NFT, activity and ENS services over Alchemy, Redis-cached
   chains/   supported chains, RPC clients
 ```
 
@@ -31,12 +32,18 @@ packages/
 Requires Node 22+, pnpm and Docker.
 
 ```bash
-cp .env.example .env            # then set BETTER_AUTH_SECRET: openssl rand -base64 32
+cp .env.example .env            # set BETTER_AUTH_SECRET (openssl rand -base64 32) and ALCHEMY_API_KEY
 pnpm install
 pnpm infra:up                   # Postgres on :55432, Redis on :56379
 pnpm db:migrate
 pnpm dev                        # web, api and worker together
 ```
+
+## Data providers
+
+The explorer reads from Alchemy. Enable Ethereum, Base, Polygon, Arbitrum, Optimism, Sepolia and Base Sepolia in your Alchemy app: balances use the Portfolio API, activity uses `alchemy_getAssetTransfers` per network. Etherscan's free tier does not cover Base or Optimism, so it is reserved for contract ABIs and verification in the contract studio.
+
+Responses are cached in Redis (balances 60s, NFTs 5 min, activity 30s). Tokens without a market price and NFTs flagged as spam are hidden by default.
 
 ## Roles
 
@@ -59,7 +66,7 @@ Permissions are defined once in `packages/shared/src/permissions.ts` and enforce
 ## Roadmap
 
 - [x] **Phase 0: Foundation.** Monorepo, auth (email + wallet), organizations, invitations, RBAC, audit log, API and worker skeletons, CI
-- [ ] **Phase 1: Explorer.** Multi-chain balances, ERC-20s, NFTs, transaction history
+- [x] **Phase 1: Explorer.** Multi-chain portfolio with USD values, NFTs with spam filtering, activity history, ENS, org-saved addresses
 - [ ] **Phase 2: Developer hub.** Projects, hashed API keys, `/v1` REST API, usage metering, request logs
 - [ ] **Phase 3: Monitors.** Wallet and contract event rules, Telegram and signed webhooks with retries
 - [ ] **Phase 4: Contract studio.** OpenZeppelin templates, compile, deploy to testnets, ABI interaction, verification

@@ -12,6 +12,12 @@ describe("org roles", () => {
     expect(roles.developer.authorize({ member: ["create"] }).success).toBe(false);
   });
 
+  it("saved addresses: developers manage, viewers read", () => {
+    expect(roles.developer.authorize({ address: ["create", "delete"] }).success).toBe(true);
+    expect(roles.viewer.authorize({ address: ["read"] }).success).toBe(true);
+    expect(roles.viewer.authorize({ address: ["create"] }).success).toBe(false);
+  });
+
   it("viewer is read-only", () => {
     expect(roles.viewer.authorize({ project: ["read"] }).success).toBe(true);
     expect(roles.viewer.authorize({ project: ["create"] }).success).toBe(false);

@@ -4,6 +4,7 @@ import { defaultStatements, ownerAc, adminAc } from "better-auth/plugins/organiz
 export const statements = {
   ...defaultStatements,
   project: ["create", "read", "update", "delete"],
+  address: ["create", "read", "delete"],
   apiKey: ["create", "read", "revoke"],
   monitor: ["create", "read", "update", "delete"],
   contract: ["create", "read", "deploy", "delete"],
@@ -15,6 +16,7 @@ export const ac = createAccessControl(statements);
 
 const allPlatform = {
   project: ["create", "read", "update", "delete"],
+  address: ["create", "read", "delete"],
   apiKey: ["create", "read", "revoke"],
   monitor: ["create", "read", "update", "delete"],
   contract: ["create", "read", "deploy", "delete"],
@@ -40,6 +42,7 @@ export const developer = ac.newRole({
 
 export const viewer = ac.newRole({
   project: ["read"],
+  address: ["read"],
   apiKey: ["read"],
   monitor: ["read"],
   contract: ["read"],
