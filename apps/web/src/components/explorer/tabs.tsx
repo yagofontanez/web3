@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { SectionTabs } from "../section-tabs";
 
 export const TABS = [
   { id: "tokens", label: "Tokens" },
@@ -12,29 +13,7 @@ export const TABS = [
 export type TabId = (typeof TABS)[number]["id"];
 
 export function Tabs() {
-  const pathname = usePathname();
-  const params = useSearchParams();
-  const current = params.get("tab") ?? "tokens";
-  return (
-    <nav aria-label="Address sections" className="flex gap-6 border-b border-line">
-      {TABS.map((t) => {
-        const next = new URLSearchParams(params);
-        next.set("tab", t.id);
-        const active = current === t.id;
-        return (
-          <Link
-            key={t.id}
-            href={`${pathname}?${next}`}
-            scroll={false}
-            aria-current={active ? "page" : undefined}
-            className={`-mb-px border-b-2 pb-2.5 text-sm ${active ? "border-verdigris font-medium text-ink" : "border-transparent text-muted hover:text-ink"}`}
-          >
-            {t.label}
-          </Link>
-        );
-      })}
-    </nav>
-  );
+  return <SectionTabs tabs={[...TABS]} label="Address sections" fallback="tokens" />;
 }
 
 export function NetworkPicker({ networks, current, allowAll }: { networks: { slug: string; name: string }[]; current: string; allowAll: boolean }) {

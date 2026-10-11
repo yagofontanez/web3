@@ -9,6 +9,7 @@ import { AddressGlyph } from "@/components/explorer/address-glyph";
 import { SearchForm } from "@/components/explorer/search-form";
 import { Icon } from "@/components/icons";
 import { OrgGlyph } from "@/components/org-glyph";
+import { describeAudit } from "@/lib/audit-describe";
 import { requireOrg } from "@/lib/dal";
 import { portfolioFor } from "@/lib/explorer";
 import { formatUsd, isWithin, sinceNow } from "@/lib/format";
@@ -237,28 +238,6 @@ async function WalletValue({ address }: { address: string }) {
   );
 }
 
-function describe(action: string, meta: Record<string, unknown> | null): string {
-  const m = meta ?? {};
-  switch (action) {
-    case "organization.created":
-      return "created the organization";
-    case "invitation.created":
-      return `invited ${m.email ?? "someone"} as ${m.role ?? "a member"}`;
-    case "invitation.accepted":
-      return "joined the organization";
-    case "member.role_updated":
-      return `changed a role from ${m.from} to ${m.to}`;
-    case "member.removed":
-      return `removed ${m.email ?? "a member"}`;
-    case "address.saved":
-      return `saved ${m.label ?? "a wallet"}`;
-    case "address.removed":
-      return `stopped watching ${m.label ?? "a wallet"}`;
-    default:
-      return action;
-  }
-}
-
 async function TeamActivity() {
   const { org, can } = await requireOrg();
   const rows = await db
@@ -298,7 +277,7 @@ async function TeamActivity() {
             />
             <p className="ml-1 flex-1 text-sm">
               <span className="font-medium">{r.actorName || r.actorEmail || "Someone"}</span>{" "}
-              <span className="text-muted">{describe(r.action, r.metadata)}</span>
+              <span className="text-muted">{describeAudit(r.action, r.metadata)}</span>
             </p>
             <time className="shrink-0 text-xs text-muted" dateTime={r.createdAt.toISOString()}>
               {sinceNow(r.createdAt)}
