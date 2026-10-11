@@ -1,12 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { reloadTo } from "@/lib/navigation";
 import { Button, FormError } from "./ui";
 
 export function AcceptInvitation({ invitationId }: { invitationId: string }) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -23,8 +22,7 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
     if (accept && data && "member" in data && data.member) {
       await authClient.organization.setActive({ organizationId: data.member.organizationId });
     }
-    router.push(accept ? "/dashboard" : "/onboarding");
-    router.refresh();
+    reloadTo(accept ? "/dashboard" : "/onboarding");
   }
 
   return (

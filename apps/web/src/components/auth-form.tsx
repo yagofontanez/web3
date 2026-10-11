@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
+import { reloadTo } from "@/lib/navigation";
 import { SiweButton } from "./siwe-button";
 import { Button, Field, FormError, Input } from "./ui";
 
@@ -12,7 +13,6 @@ function safeNext(value: string | null) {
 }
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
-  const router = useRouter();
   const next = safeNext(useSearchParams().get("next"));
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -35,8 +35,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       setError(error.message ?? "Something went wrong. Try again.");
       return;
     }
-    router.push(next);
-    router.refresh();
+    reloadTo(next);
   }
 
   return (

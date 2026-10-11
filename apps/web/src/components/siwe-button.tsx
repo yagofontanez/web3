@@ -1,14 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSiweMessage } from "viem/siwe";
 import { useConnect, useConnection, useConnectors, useSignMessage } from "wagmi";
 import { authClient } from "@/lib/auth-client";
+import { reloadTo } from "@/lib/navigation";
 import { Button, FormError } from "./ui";
 
 export function SiweButton({ next = "/dashboard" }: { next?: string }) {
-  const router = useRouter();
   const connectors = useConnectors();
   const { connectAsync } = useConnect();
   const connection = useConnection();
@@ -47,8 +46,7 @@ export function SiweButton({ next = "/dashboard" }: { next?: string }) {
       const { error: verifyError } = await authClient.siwe.verify({ message, signature });
       if (verifyError) throw new Error(verifyError.message ?? "Signature could not be verified.");
 
-      router.push(next);
-      router.refresh();
+      reloadTo(next);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(/rejected|denied/i.test(msg) ? "You declined the signature request in your wallet." : msg);

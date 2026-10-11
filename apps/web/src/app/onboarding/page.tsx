@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { CreateOrgForm } from "@/components/create-org-form";
+import { headers } from "next/headers";
+import { CreateOrgForm, ExistingOrgs } from "@/components/create-org-form";
+import { auth } from "@/lib/auth";
 import { Logo } from "@/components/logo";
 import { requireSession } from "@/lib/dal";
 
@@ -25,5 +27,15 @@ export default function OnboardingPage() {
 
 async function Gate() {
   await requireSession();
-  return <CreateOrgForm />;
+  const orgs = await auth.api.listOrganizations({ headers: await headers() });
+  if (orgs.length === 0) return <CreateOrgForm />;
+  return (
+    <div className="flex flex-col gap-8">
+      <ExistingOrgs orgs={orgs.map((o) => ({ id: o.id, name: o.name, slug: o.slug }))} />
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium">Or create another one</h2>
+        <CreateOrgForm />
+      </div>
+    </div>
+  );
 }
