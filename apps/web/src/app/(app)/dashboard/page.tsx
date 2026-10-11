@@ -334,7 +334,6 @@ async function Team() {
 
 function ComingNext() {
   const items = [
-    { icon: "api" as const, name: "API & keys", text: "Serve this data to your own apps." },
     { icon: "monitors" as const, name: "Monitors", text: "Telegram and webhook alerts on watched wallets." },
     { icon: "contracts" as const, name: "Contract studio", text: "Deploy templates to testnets from your wallet." },
   ];
@@ -343,7 +342,7 @@ function ComingNext() {
       <h2 id="next" className="text-sm font-medium text-muted">
         Coming to this workspace
       </h2>
-      <ul className="grid gap-6 sm:grid-cols-3">
+      <ul className="grid gap-6 sm:grid-cols-2">
         {items.map((i) => (
           <li key={i.name} className="flex gap-3">
             <Icon name={i.icon} className="mt-0.5 shrink-0 text-muted" />

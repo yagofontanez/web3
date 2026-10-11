@@ -13,7 +13,13 @@
     "@w3s/db": "workspace:*",
     "@w3s/chains": "workspace:*",
     "bullmq": "6.3.12",
-    "ioredis": "6.0.0"
+    "ioredis": "6.0.0",
+    "drizzle-orm": "0.45.4"
   },
-  "devDependencies": { "@types/node": "^22", "tsup": "^8", "tsx": "^4" }
+  "devDependencies": {
+    "@types/node": "^22",
+    "tsup": "^8",
+    "tsx": "^4",
+    "typescript": "5.9.3"
+  }
 }

@@ -21,6 +21,14 @@ export function describeAudit(action: string, meta: Record<string, unknown> | nu
       return `saved ${m.label ?? "a wallet"}`;
     case "address.removed":
       return `stopped watching ${m.label ?? "a wallet"}`;
+    case "project.created":
+      return `created the project ${m.name ?? ""}`.trim();
+    case "project.archived":
+      return `archived the project ${m.name ?? ""}`.trim();
+    case "api_key.created":
+      return `created the API key ${m.name ?? ""} in ${m.project ?? "a project"}`;
+    case "api_key.revoked":
+      return `revoked the API key ${m.name ?? ""}`.trim();
     default:
       return action;
   }

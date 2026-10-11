@@ -9,7 +9,7 @@ import { Icon, type IconName } from "./icons";
 const sections: { href: string; label: string; icon: IconName; soon?: boolean }[] = [
   { href: "/dashboard", label: "Overview", icon: "overview" },
   { href: "/dashboard/explorer", label: "Explorer", icon: "explorer" },
-  { href: "/dashboard/developers", label: "API & keys", icon: "api", soon: true },
+  { href: "/dashboard/developers", label: "API & keys", icon: "api" },
   { href: "/dashboard/monitors", label: "Monitors", icon: "monitors", soon: true },
   { href: "/dashboard/contracts", label: "Contract studio", icon: "contracts", soon: true },
   { href: "/dashboard/settings", label: "Organization", icon: "organization" },

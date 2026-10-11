@@ -130,12 +130,21 @@ importers:
       '@w3s/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@w3s/explorer':
+        specifier: workspace:*
+        version: link:../../packages/explorer
       '@w3s/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(kysely@0.29.6)(postgres@3.4.9)
       fastify:
         specifier: 5.12.5
         version: 5.12.5
+      fastify-plugin:
+        specifier: ^5
+        version: 5.1.0
       ioredis:
         specifier: 6.0.0
         version: 6.0.0(supports-color@7.2.0)
@@ -152,6 +161,9 @@ importers:
       tsx:
         specifier: ^4
         version: 4.23.15
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4
         version: 4.1.11(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.15))
@@ -179,6 +191,9 @@ importers:
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(kysely@0.29.6)(postgres@3.4.9)
+      ioredis:
+        specifier: 6.0.0
+        version: 6.0.0(supports-color@7.2.0)
       next:
         specifier: 16.4.0
         version: 16.4.0(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@22.20.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -240,6 +255,9 @@ importers:
       bullmq:
         specifier: 6.3.12
         version: 6.3.12(ioredis@6.0.0(supports-color@7.2.0))
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(kysely@0.29.6)(postgres@3.4.9)
       ioredis:
         specifier: 6.0.0
         version: 6.0.0(supports-color@7.2.0)
@@ -253,6 +271,9 @@ importers:
       tsx:
         specifier: ^4
         version: 4.23.15
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
 
   packages/chains:
     dependencies:
@@ -314,6 +335,9 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
     devDependencies:
+      '@types/node':
+        specifier: ^22
+        version: 22.20.5
       vitest:
         specifier: ^4
         version: 4.1.11(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))

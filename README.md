@@ -18,7 +18,7 @@ A multi-tenant Web3 platform: wallet explorer, on-chain monitoring, a developer 
 ```
 apps/
   web/      dashboard, auth, org management          :3000
-  api/      public REST API (API-key auth in phase 2) :4100
+  api/      public REST API, API-key auth, per-key limits :4100
   worker/   background jobs: monitors, webhooks, indexing
 packages/
   db/       Drizzle schema + migrations
@@ -45,6 +45,10 @@ The explorer reads from Alchemy. Enable Ethereum, Base, Polygon, Arbitrum, Optim
 
 Responses are cached in Redis (balances 60s, NFTs 5 min, activity 30s). Tokens without a market price and NFTs flagged as spam are hidden by default.
 
+## Public API
+
+`apps/api` serves `/v1` over the explorer package. Keys look like `w3s_live_…`, are stored only as an HMAC-SHA256 with `API_KEY_PEPPER`, and are cached in Redis for 60s (revocation clears the cache immediately). Each key has one per-minute limit shared across every endpoint. Requests are logged in batches to `api_request_log` and pruned after 30 days by the worker. The reference lives in the dashboard under API & keys.
+
 ## Roles
 
 | Role | Can |
@@ -67,7 +71,7 @@ Permissions are defined once in `packages/shared/src/permissions.ts` and enforce
 
 - [x] **Phase 0: Foundation.** Monorepo, auth (email + wallet), organizations, invitations, RBAC, audit log, API and worker skeletons, CI
 - [x] **Phase 1: Explorer.** Multi-chain portfolio with USD values, NFTs with spam filtering, activity history, ENS, org-saved addresses
-- [ ] **Phase 2: Developer hub.** Projects, hashed API keys, `/v1` REST API, usage metering, request logs
+- [x] **Phase 2: Developer hub.** Projects, HMAC-hashed API keys shown once, `/v1` REST API, per-key rate limits, request logs, usage charts, in-app reference
 - [ ] **Phase 3: Monitors.** Wallet and contract event rules, Telegram and signed webhooks with retries
 - [ ] **Phase 4: Contract studio.** OpenZeppelin templates, compile, deploy to testnets, ABI interaction, verification
 - [ ] **Phase 5: Billing.** Plans and quotas with Stripe

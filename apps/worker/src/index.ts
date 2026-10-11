@@ -1,12 +1,16 @@
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
-import { sql } from "@w3s/db";
+import { lt, sql as dsql } from "drizzle-orm";
+import { db, schema, sql } from "@w3s/db";
 import { QUEUES } from "./queues";
 
 const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:56379", { maxRetriesPerRequest: null });
 
 const systemQueue = new Queue(QUEUES.system, { connection });
 await systemQueue.upsertJobScheduler("heartbeat", { every: 60_000 }, { name: "heartbeat" });
+await systemQueue.upsertJobScheduler("prune-request-logs", { pattern: "15 3 * * *" }, { name: "prune-request-logs" });
+
+const LOG_RETENTION_DAYS = 30;
 
 const worker = new Worker(
   QUEUES.system,
@@ -14,6 +18,13 @@ const worker = new Worker(
     if (job.name === "heartbeat") {
       await sql`select 1`;
       return { ok: true, at: new Date().toISOString() };
+    }
+    if (job.name === "prune-request-logs") {
+      const deleted = await db
+        .delete(schema.apiRequestLog)
+        .where(lt(schema.apiRequestLog.createdAt, dsql`now() - make_interval(days => ${LOG_RETENTION_DAYS})`))
+        .returning({ id: schema.apiRequestLog.id });
+      return { deleted: deleted.length };
     }
     throw new Error(`Unknown job ${job.name}`);
   },

@@ -7,6 +7,11 @@ export type ResolveResult =
   | { ok: true; address: `0x${string}`; ens: string | null }
   | { ok: false; reason: "invalid" | "not_found" };
 
+export function normalizeAddress(raw: string): `0x${string}` | null {
+  const input = raw.trim();
+  return isAddress(input, { strict: false }) ? getAddress(input) : null;
+}
+
 export function looksLikeEns(input: string) {
   return /^[^\s.]+(\.[^\s.]+)+$/.test(input) && !input.startsWith("0x");
 }
