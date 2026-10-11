@@ -182,6 +182,9 @@ importers:
       '@w3s/explorer':
         specifier: workspace:*
         version: link:../../packages/explorer
+      '@w3s/notify':
+        specifier: workspace:*
+        version: link:../../packages/notify
       '@w3s/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -252,6 +255,12 @@ importers:
       '@w3s/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@w3s/explorer':
+        specifier: workspace:*
+        version: link:../../packages/explorer
+      '@w3s/notify':
+        specifier: workspace:*
+        version: link:../../packages/notify
       bullmq:
         specifier: 6.3.12
         version: 6.3.12(ioredis@6.0.0(supports-color@7.2.0))
@@ -274,6 +283,9 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^4
+        version: 4.1.11(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
 
   packages/chains:
     dependencies:
@@ -322,6 +334,22 @@ importers:
       '@types/node':
         specifier: ^22
         version: 22.20.5
+      vitest:
+        specifier: ^4
+        version: 4.1.11(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
+  packages/notify:
+    dependencies:
+      '@w3s/explorer':
+        specifier: workspace:*
+        version: link:../explorer
+    devDependencies:
+      '@types/node':
+        specifier: ^22
+        version: 22.20.5
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4
         version: 4.1.11(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))

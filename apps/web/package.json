@@ -25,7 +25,8 @@
     "viem": "2.57.4",
     "wagmi": "3.7.7",
     "zod": "4.6.5",
-    "ioredis": "6.0.0"
+    "ioredis": "6.0.0",
+    "@w3s/notify": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

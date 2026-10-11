@@ -334,7 +334,6 @@ async function Team() {
 
 function ComingNext() {
   const items = [
-    { icon: "monitors" as const, name: "Monitors", text: "Telegram and webhook alerts on watched wallets." },
     { icon: "contracts" as const, name: "Contract studio", text: "Deploy templates to testnets from your wallet." },
   ];
   return (

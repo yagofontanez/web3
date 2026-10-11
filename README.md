@@ -23,7 +23,8 @@ apps/
 packages/
   db/       Drizzle schema + migrations
   shared/   RBAC roles & permissions (shared by web, api, worker)
-  explorer/ portfolio, NFT, activity and ENS services over Alchemy, Redis-cached
+  explorer/ portfolio, NFT, activity, ENS and event decoding over Alchemy, Redis-cached
+  notify/   alert formatting, Telegram delivery, signed webhooks, secret encryption
   chains/   supported chains, RPC clients
 ```
 
@@ -49,6 +50,16 @@ Responses are cached in Redis (balances 60s, NFTs 5 min, activity 30s). Tokens w
 
 `apps/api` serves `/v1` over the explorer package. Keys look like `w3s_live_…`, are stored only as an HMAC-SHA256 with `API_KEY_PEPPER`, and are cached in Redis for 60s (revocation clears the cache immediately). Each key has one per-minute limit shared across every endpoint. Requests are logged in batches to `api_request_log` and pruned after 30 days by the worker. The reference lives in the dashboard under API & keys.
 
+## Monitors
+
+The worker scans every enabled monitor every 30 seconds from the block after its last checkpoint, so nothing is missed between scans and each match alerts once (unique on monitor and transfer or log id). Contract events are read with `eth_getLogs` in windows of `ALCHEMY_GETLOGS_RANGE` blocks (10 on Alchemy's free tier).
+
+Deliveries retry up to 6 times with exponential backoff starting at 15s. Webhooks carry `x-systema-signature: t=<unix>,v1=<hmac-sha256(secret, "t.body")>`; secrets are stored encrypted with AES-256-GCM. Webhook URLs must be https and public unless `ALLOW_PRIVATE_WEBHOOKS=true` (local development only).
+
+A scan that matches more than 25 times sends the first 5 plus a summary, and a monitor that sends over 200 alerts in an hour pauses itself and says why.
+
+Telegram linking uses one-time `/start` codes that expire in 30 minutes. The worker long-polls the bot, guarded by a Redis lock so only one worker listens.
+
 ## Roles
 
 | Role | Can |
@@ -72,6 +83,6 @@ Permissions are defined once in `packages/shared/src/permissions.ts` and enforce
 - [x] **Phase 0: Foundation.** Monorepo, auth (email + wallet), organizations, invitations, RBAC, audit log, API and worker skeletons, CI
 - [x] **Phase 1: Explorer.** Multi-chain portfolio with USD values, NFTs with spam filtering, activity history, ENS, org-saved addresses
 - [x] **Phase 2: Developer hub.** Projects, HMAC-hashed API keys shown once, `/v1` REST API, per-key rate limits, request logs, usage charts, in-app reference
-- [ ] **Phase 3: Monitors.** Wallet and contract event rules, Telegram and signed webhooks with retries
+- [x] **Phase 3: Monitors.** Wallet transfer and contract event rules, Telegram and HMAC-signed webhooks with retries, flood protection
 - [ ] **Phase 4: Contract studio.** OpenZeppelin templates, compile, deploy to testnets, ABI interaction, verification
 - [ ] **Phase 5: Billing.** Plans and quotas with Stripe

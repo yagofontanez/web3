@@ -122,3 +122,35 @@ describe("helpers", () => {
     expect(n.collection).toBe("Punks");
   });
 });
+
+import { decodeEvent, parseEventSignature } from "./events";
+
+describe("contract events", () => {
+  it("parses signatures with or without the event keyword and computes topic0", () => {
+    const a = parseEventSignature("Transfer(address indexed from, address indexed to, uint256 value)");
+    const b = parseEventSignature("event Transfer(address indexed from, address indexed to, uint256 value);");
+    if ("error" in a || "error" in b) throw new Error("should parse");
+    expect(a.topic0).toBe("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+    expect(a.canonical).toBe("Transfer(address,address,uint256)");
+    expect(b.topic0).toBe(a.topic0);
+  });
+
+  it("explains bad input instead of throwing", () => {
+    expect("error" in parseEventSignature("not an event")).toBe(true);
+    expect("error" in parseEventSignature("")).toBe(true);
+  });
+
+  it("decodes indexed and data arguments into strings", () => {
+    const parsed = parseEventSignature("OwnershipTransferred(address indexed previousOwner, address indexed newOwner)");
+    if ("error" in parsed) throw new Error("should parse");
+    const args = decodeEvent(parsed, {
+      data: "0x",
+      topics: [
+        parsed.topic0,
+        "0x0000000000000000000000001111111111111111111111111111111111111111",
+        "0x0000000000000000000000002222222222222222222222222222222222222222",
+      ],
+    });
+    expect(args).toEqual({ previousOwner: "0x1111111111111111111111111111111111111111", newOwner: "0x2222222222222222222222222222222222222222" });
+  });
+});

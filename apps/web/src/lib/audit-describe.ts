@@ -31,6 +31,20 @@ export function describeAudit(action: string, meta: Record<string, unknown> | nu
       return `created the API key ${m.name ?? ""} in ${m.project ?? "a project"}`;
     case "api_key.revoked":
       return `revoked the API key ${m.name ?? ""}`.trim();
+    case "monitor.created":
+      return `created the monitor ${m.name ?? ""}`.trim();
+    case "monitor.updated":
+      return `edited the monitor ${m.name ?? ""}`.trim();
+    case "monitor.paused":
+      return `paused the monitor ${m.name ?? ""}`.trim();
+    case "monitor.resumed":
+      return `resumed the monitor ${m.name ?? ""}`.trim();
+    case "monitor.deleted":
+      return `deleted the monitor ${m.name ?? ""}`.trim();
+    case "channel.created":
+      return `connected ${m.kind === "telegram" ? "the Telegram chat" : "the webhook"} ${m.name ?? ""}`.trim();
+    case "channel.removed":
+      return `removed the channel ${m.name ?? ""}`.trim();
     default:
       return action;
   }
