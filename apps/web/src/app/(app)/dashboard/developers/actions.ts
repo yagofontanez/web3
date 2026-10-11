@@ -30,6 +30,22 @@ export async function createProject(input: z.input<typeof projectInput>): Promis
   return { ok: true, data: { id: row!.id } };
 }
 
+export async function updateProject(projectId: string, input: z.input<typeof projectInput>): Promise<ActionResult> {
+  const { org, user, can } = await requireOrg();
+  if (!can({ project: ["update"] })) return { ok: false, error: "Your role can't edit projects." };
+  const parsed = projectInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  const [row] = await db
+    .update(schema.project)
+    .set({ name: parsed.data.name, description: parsed.data.description || null })
+    .where(and(eq(schema.project.id, projectId), eq(schema.project.organizationId, org.id), isNull(schema.project.archivedAt)))
+    .returning({ id: schema.project.id });
+  if (!row) return { ok: false, error: "That project no longer exists." };
+  await audit({ organizationId: org.id, actorId: user.id, action: "project.updated", targetType: "project", targetId: projectId, metadata: { name: parsed.data.name } });
+  refresh();
+  return { ok: true };
+}
+
 export async function archiveProject(projectId: string): Promise<ActionResult> {
   const { org, user, can } = await requireOrg();
   if (!can({ project: ["delete"] })) return { ok: false, error: "Your role can't archive projects." };

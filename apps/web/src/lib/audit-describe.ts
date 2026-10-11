@@ -23,6 +23,8 @@ export function describeAudit(action: string, meta: Record<string, unknown> | nu
       return `stopped watching ${m.label ?? "a wallet"}`;
     case "project.created":
       return `created the project ${m.name ?? ""}`.trim();
+    case "project.updated":
+      return `updated the project ${m.name ?? ""}`.trim();
     case "project.archived":
       return `archived the project ${m.name ?? ""}`.trim();
     case "api_key.created":

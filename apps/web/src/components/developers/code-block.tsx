@@ -18,7 +18,7 @@ export function CodeBlock({ code, label, wrap = false }: { code: string; label?:
       >
         {copied ? "Copied" : "Copy"}
       </button>
-      <pre className={`p-4 pr-16 font-mono text-[12.5px] leading-relaxed text-ink ${wrap ? "break-all whitespace-pre-wrap" : "overflow-x-auto"}`}>{code}</pre>
+      <pre className={`p-4 pr-16 font-mono text-[12.5px] leading-relaxed text-ink ${wrap ? "whitespace-pre-wrap [overflow-wrap:anywhere]" : "overflow-x-auto"}`}>{code}</pre>
     </div>
   );
 }
