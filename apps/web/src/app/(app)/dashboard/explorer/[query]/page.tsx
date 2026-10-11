@@ -8,6 +8,7 @@ import { ActivityList } from "@/components/explorer/activity-list";
 import { AddressGlyph } from "@/components/explorer/address-glyph";
 import { CopyButton } from "@/components/explorer/copy-button";
 import { NftGrid } from "@/components/explorer/nft-grid";
+import { RecordLookup } from "@/components/explorer/recent-lookups";
 import { SaveAddress } from "@/components/explorer/saved-controls";
 import { SearchForm } from "@/components/explorer/search-form";
 import { NetworkPicker, Tabs } from "@/components/explorer/tabs";
@@ -69,6 +70,7 @@ async function AddressBody({ params, searchParams }: Pick<Props, "params" | "sea
 
   return (
     <>
+      <RecordLookup address={address} ens={ens} />
       <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <AddressGlyph address={address} className="size-16" />

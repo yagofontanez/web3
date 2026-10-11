@@ -10,7 +10,7 @@ export function RemoveSaved({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   if (!confirming) {
     return (
-      <Button variant="ghost" className="h-auto px-0" onClick={() => setConfirming(true)}>
+      <Button variant="ghost" className="h-auto px-0 text-xs" onClick={() => setConfirming(true)}>
         Remove
       </Button>
     );
@@ -19,7 +19,7 @@ export function RemoveSaved({ id }: { id: string }) {
     <span className="flex items-center gap-3">
       <Button
         variant="danger"
-        className="h-auto px-0"
+        className="h-auto px-0 text-xs"
         disabled={pending}
         onClick={() =>
           start(async () => {
@@ -30,7 +30,7 @@ export function RemoveSaved({ id }: { id: string }) {
       >
         {pending ? "Removing…" : "Confirm"}
       </Button>
-      <Button variant="ghost" className="h-auto px-0" onClick={() => setConfirming(false)}>
+      <Button variant="ghost" className="h-auto px-0 text-xs" onClick={() => setConfirming(false)}>
         Keep
       </Button>
       <FormError message={error} />
