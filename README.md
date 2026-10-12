@@ -76,6 +76,24 @@ NEXT_PUBLIC_STUDIO_LOCAL=true
 
 `LOCAL_EVM_URL=http://127.0.0.1:8545 pnpm --filter @w3s/contracts test` also deploys every template to that node and exercises mint, burn, pause and ownership.
 
+## Billing
+
+Plans live in `packages/billing/src/plans.ts`. Free covers 10,000 API requests a month, 3 active monitors and 3 members. Pro ($29) and Team ($99) raise those limits and unlock webhook alerts.
+
+```bash
+# .env: a sandbox key from the Stripe dashboard
+STRIPE_SECRET_KEY=sk_test_...
+pnpm --filter @w3s/billing setup-stripe        # products, prices (by lookup key) and the portal config, idempotent
+stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to localhost:3000/api/stripe/webhook
+# copy the whsec_... it prints into STRIPE_WEBHOOK_SECRET and restart pnpm dev
+```
+
+New subscriptions go through Stripe Checkout; plan changes, cancellations, cards and invoices go through the Customer Portal. The app never trusts the success page: `/api/stripe/webhook` verifies the signature, re-reads the subscription from Stripe, upserts it under a row lock and records each event ID so retries are idempotent. Test with card `4242 4242 4242 4242`.
+
+Limits are enforced on the server. The public API counts requests per organization per UTC month in Redis and answers `402 quota_exceeded` past the limit, with `x-quota-limit`, `x-quota-remaining` and `x-quota-reset` on every response. Creating or resuming monitors, adding webhooks and sending invitations check the plan. A downgrade pauses the newest monitors above the new limit and says why.
+
+For production, use a restricted API key (`rk_`) with write access to Customers, Checkout Sessions, Customer Portal and Subscriptions and read access to Prices. Sales tax isn't calculated: turn on Stripe Tax and `automatic_tax` only after adding a tax registration.
+
 ## Roles
 
 | Role | Can |
@@ -101,4 +119,4 @@ Permissions are defined once in `packages/shared/src/permissions.ts` and enforce
 - [x] **Phase 2: Developer hub.** Projects, HMAC-hashed API keys shown once, `/v1` REST API, per-key rate limits, request logs, usage charts, in-app reference
 - [x] **Phase 3: Monitors.** Wallet transfer and contract event rules, Telegram and HMAC-signed webhooks with retries, flood protection
 - [x] **Phase 4: Contract studio.** OpenZeppelin templates, solc compile, wallet deploys to testnets, ABI-driven read/write, Etherscan verification and import
-- [ ] **Phase 5: Billing.** Plans and quotas with Stripe
+- [x] **Phase 5: Billing.** Free, Pro and Team plans on Stripe Checkout and the Customer Portal, webhook-synced subscriptions, monthly API quotas and plan limits

@@ -135,4 +135,35 @@ describe("public api", () => {
     const app = await buildApp(deps, { logger: false });
     for (let i = 0; i < 40; i++) expect((await app.inject("/health")).statusCode).toBe(200);
   });
+
+  it("enforces the organization's monthly quota and reports it in headers", async () => {
+    const used = new Map<string, number>();
+    const resetsAt = new Date(Date.UTC(2026, 10, 1));
+    const { deps, live, logs } = setup({
+      quota: {
+        consume: async (org) => {
+          const n = (used.get(org) ?? 0) + 1;
+          used.set(org, n);
+          return { used: n, limit: 2, plan: "Free", resetsAt };
+        },
+      },
+    });
+    const app = await buildApp(deps, { logger: false });
+    const responses = [];
+    for (let i = 0; i < 3; i++) responses.push(await app.inject({ url: "/v1/networks", headers: bearer(live.key) }));
+    expect(responses.map((r) => r.statusCode)).toEqual([200, 200, 402]);
+    expect(responses[0]!.headers["x-quota-remaining"]).toBe("1");
+    expect(responses[2]!.headers["x-quota-remaining"]).toBe("0");
+    expect(responses[2]!.headers["x-quota-reset"]).toBe(String(resetsAt.getTime() / 1000));
+    expect(responses[2]!.json().error.code).toBe("quota_exceeded");
+    expect(logs.at(-1)).toMatchObject({ status: 402, errorCode: "quota_exceeded" });
+  });
+
+  it("keeps serving when the quota store is unavailable", async () => {
+    const { deps, live } = setup({ quota: { consume: async () => null } });
+    const app = await buildApp(deps, { logger: false });
+    const res = await app.inject({ url: "/v1/networks", headers: bearer(live.key) });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["x-quota-limit"]).toBeUndefined();
+  });
 });

@@ -7,7 +7,7 @@ import { HttpError } from "./errors";
 import { apiKeyAuth } from "./plugins/api-key-auth";
 import { registerRequestLog } from "./plugins/request-log";
 import { registerV1 } from "./routes/v1";
-import type { ExplorerService, KeyStore, LogSink } from "./types";
+import type { ExplorerService, KeyStore, LogSink, QuotaStore } from "./types";
 
 export type AppDeps = {
   redis?: Redis;
@@ -15,6 +15,7 @@ export type AppDeps = {
   keys: KeyStore;
   explorer: ExplorerService;
   logs: LogSink;
+  quota?: QuotaStore;
   pepper: string;
 };
 
@@ -71,6 +72,25 @@ export async function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}) {
       errorResponseBuilder: (_req, ctx) =>
         new HttpError(429, "rate_limited", `This key is limited to ${ctx.max} requests per minute. Retry in ${Math.ceil(ctx.ttl / 1000)}s.`),
     });
+    if (deps.quota) {
+      const quota = deps.quota;
+      v1.addHook("preHandler", async (req, reply) => {
+        if (!req.apiKey) return;
+        const q = await quota.consume(req.apiKey.organizationId);
+        if (!q) return;
+        const limited = Number.isFinite(q.limit);
+        reply.header("x-quota-limit", limited ? q.limit : "unlimited");
+        reply.header("x-quota-remaining", limited ? Math.max(0, q.limit - q.used) : "unlimited");
+        reply.header("x-quota-reset", Math.floor(q.resetsAt.getTime() / 1000));
+        if (limited && q.used > q.limit) {
+          throw new HttpError(
+            402,
+            "quota_exceeded",
+            `This organization used its ${q.limit.toLocaleString("en-US")} monthly requests on the ${q.plan} plan. Upgrade in Settings → Billing or wait until ${q.resetsAt.toISOString().slice(0, 10)}.`,
+          );
+        }
+      });
+    }
     registerV1(v1, deps.explorer);
   });
 

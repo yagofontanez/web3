@@ -127,6 +127,9 @@ importers:
       '@fastify/rate-limit':
         specifier: ^10
         version: 10.3.0
+      '@w3s/billing':
+        specifier: workspace:*
+        version: link:../../packages/billing
       '@w3s/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -176,6 +179,9 @@ importers:
       '@tanstack/react-query':
         specifier: 5.104.1
         version: 5.104.1(react@19.3.0)
+      '@w3s/billing':
+        specifier: workspace:*
+        version: link:../../packages/billing
       '@w3s/chains':
         specifier: workspace:*
         version: link:../../packages/chains
@@ -221,6 +227,9 @@ importers:
       solc:
         specifier: 0.8.37
         version: 0.8.37(debug@4.4.3(supports-color@7.2.0))
+      stripe:
+        specifier: 23.0.0
+        version: 23.0.0(@types/node@22.20.5)
       viem:
         specifier: 2.57.4
         version: 2.57.4(typescript@5.9.3)(zod@4.6.5)
@@ -286,6 +295,25 @@ importers:
       tsup:
         specifier: ^8
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.29)(supports-color@7.2.0)(tsx@4.23.15)(typescript@5.9.3)
+      tsx:
+        specifier: ^4
+        version: 4.23.15
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4
+        version: 4.1.11(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
+  packages/billing:
+    dependencies:
+      stripe:
+        specifier: 23.0.0
+        version: 23.0.0(@types/node@22.20.5)
+    devDependencies:
+      '@types/node':
+        specifier: ^22
+        version: 22.20.5
       tsx:
         specifier: ^4
         version: 4.23.15
@@ -4850,6 +4878,15 @@ packages:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
 
+  stripe@23.0.0:
+    resolution: {integrity: sha512-MDE2A5ZVVluYURORaZEVghSmnLJc3w6aHAlZSxDQMsOjOb3V0O6ro/CiaeFlJS4N7uIVmsg98ocRsPmUK6YfyA==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@types/node': '>=20'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
   styled-jsx@5.1.6:
     resolution: {integrity: sha512-qSVyDTeMotdvQYoHWLNGwRFJHC+i+ZvdBRYosOFgC+Wg1vx4frN2/RG/NA7SYqqvKNLf39P2LSRA2pu6n0XYZA==}
     engines: {node: '>= 12.0.0'}
@@ -9412,6 +9449,10 @@ snapshots:
   strip-bom@3.0.0: {}
 
   strip-json-comments@3.1.1: {}
+
+  stripe@23.0.0(@types/node@22.20.5):
+    optionalDependencies:
+      '@types/node': 22.20.5
 
   styled-jsx@5.1.6(@babel/core@7.29.7(supports-color@7.2.0))(react@19.3.0):
     dependencies:

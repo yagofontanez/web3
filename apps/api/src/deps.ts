@@ -1,8 +1,9 @@
 import { eq, sql as dsql } from "drizzle-orm";
 import type { Redis } from "ioredis";
+import { effectivePlan, PLANS, usagePeriod, type PlanId } from "@w3s/billing/plans";
 import { db, schema } from "@w3s/db";
 import { getActivity, getNfts, getPortfolio, resolveQuery } from "@w3s/explorer";
-import type { ApiKeyRecord, ExplorerService, KeyStore, LogSink, RequestLogEntry } from "./types";
+import type { ApiKeyRecord, ExplorerService, KeyStore, LogSink, QuotaStore, RequestLogEntry } from "./types";
 
 const KEY_TTL = 60;
 
@@ -40,6 +41,45 @@ export function dbKeyStore(redis: Redis): KeyStore {
         await redis.set(cacheKey, JSON.stringify(record), "EX", record ? KEY_TTL : 30);
       } catch {}
       return record;
+    },
+  };
+}
+
+const PLAN_TTL = 60;
+
+export function redisQuotaStore(redis: Redis): QuotaStore {
+  async function planFor(organizationId: string) {
+    const cacheKey = `w3s:plan:${organizationId}`;
+    try {
+      const hit = await redis.get(cacheKey);
+      if (hit && hit in PLANS) return PLANS[hit as PlanId];
+    } catch {}
+    const [row] = await db
+      .select({ plan: schema.subscription.plan, status: schema.subscription.status })
+      .from(schema.subscription)
+      .where(eq(schema.subscription.organizationId, organizationId))
+      .limit(1);
+    const plan = effectivePlan(row ?? null);
+    try {
+      await redis.set(cacheKey, plan.id, "EX", PLAN_TTL);
+    } catch {}
+    return plan;
+  }
+
+  return {
+    async consume(organizationId) {
+      try {
+        const plan = await planFor(organizationId);
+        const now = new Date();
+        const key = `w3s:usage:${organizationId}:${usagePeriod(now)}`;
+        const used = await redis.incr(key);
+        if (used === 1) await redis.expire(key, 60 * 60 * 24 * 40);
+        const limit = plan.limits.apiRequestsPerMonth;
+        if (Number.isFinite(limit) && used > limit) await redis.decr(key);
+        return { used, limit, plan: plan.name, resetsAt: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)) };
+      } catch {
+        return null;
+      }
     },
   };
 }

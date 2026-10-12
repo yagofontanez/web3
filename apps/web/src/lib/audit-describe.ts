@@ -31,6 +31,13 @@ export function describeAudit(action: string, meta: Record<string, unknown> | nu
       return `created the API key ${m.name ?? ""} in ${m.project ?? "a project"}`;
     case "api_key.revoked":
       return `revoked the API key ${m.name ?? ""}`.trim();
+    case "billing.checkout_started":
+      return `opened checkout for the ${cap(m.plan)} plan`;
+    case "billing.subscription_changed":
+      if (m.from !== m.to) return `changed the plan from ${cap(m.from)} to ${cap(m.to)}`;
+      if (m.cancelAtPeriodEnd) return `scheduled the ${cap(m.to)} plan to cancel at the end of the period`;
+      if (m.status === "past_due") return `couldn't charge the card for the ${cap(m.to)} plan`;
+      return `updated the ${cap(m.to)} subscription (${m.status})`;
     case "monitor.created":
       return `created the monitor ${m.name ?? ""}`.trim();
     case "monitor.updated":
@@ -60,4 +67,9 @@ export function describeAudit(action: string, meta: Record<string, unknown> | nu
     default:
       return action;
   }
+}
+
+function cap(v: unknown) {
+  const s = String(v ?? "");
+  return s ? s[0]!.toUpperCase() + s.slice(1) : "unknown";
 }

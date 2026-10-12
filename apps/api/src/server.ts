@@ -1,7 +1,7 @@
 import { Redis } from "ioredis";
 import { sql } from "@w3s/db";
 import { buildApp } from "./app";
-import { batchedLogSink, dbKeyStore, liveExplorer } from "./deps";
+import { batchedLogSink, dbKeyStore, liveExplorer, redisQuotaStore } from "./deps";
 
 const pepper = process.env.API_KEY_PEPPER;
 if (!pepper || pepper.length < 32) throw new Error("API_KEY_PEPPER must be set to at least 32 characters");
@@ -13,6 +13,7 @@ const app = await buildApp({
   redis,
   pepper,
   keys: dbKeyStore(redis),
+  quota: redisQuotaStore(redis),
   explorer: liveExplorer,
   logs,
   checks: {

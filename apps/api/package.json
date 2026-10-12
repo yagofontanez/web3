@@ -14,6 +14,7 @@
     "@fastify/cors": "^11",
     "@fastify/helmet": "^13",
     "@fastify/rate-limit": "^10",
+    "@w3s/billing": "workspace:*",
     "@w3s/db": "workspace:*",
     "@w3s/explorer": "workspace:*",
     "@w3s/shared": "workspace:*",

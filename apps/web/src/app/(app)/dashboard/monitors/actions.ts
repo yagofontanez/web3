@@ -20,9 +20,17 @@ import {
   type SendResult,
 } from "@w3s/notify";
 import { audit } from "@/lib/audit";
+import { activeMonitorCount, getPlan } from "@/lib/billing";
 import { requireOrg } from "@/lib/dal";
 
 type Result<T = undefined> = ({ ok: true } & (T extends undefined ? object : { data: T })) | { ok: false; error: string };
+
+async function monitorLimitError(organizationId: string) {
+  const plan = await getPlan(organizationId);
+  if (!Number.isFinite(plan.limits.monitors)) return null;
+  if ((await activeMonitorCount(organizationId)) < plan.limits.monitors) return null;
+  return `The ${plan.name} plan includes ${plan.limits.monitors} active monitors. Pause one or upgrade in Settings → Billing.`;
+}
 
 const monitorInput = z.discriminatedUnion("kind", [
   z.object({
@@ -86,6 +94,8 @@ async function normalize(orgId: string, input: MonitorInput) {
 export async function createMonitor(input: MonitorInput): Promise<Result<{ id: string }>> {
   const { org, user, can } = await requireOrg();
   if (!can({ monitor: ["create"] })) return { ok: false, error: "Your role can't create monitors." };
+  const limit = await monitorLimitError(org.id);
+  if (limit) return { ok: false, error: limit };
   const n = await normalize(org.id, input);
   if ("error" in n) return { ok: false, error: n.error! };
   const { channelIds, ...v } = n.value;
@@ -117,6 +127,17 @@ export async function updateMonitor(id: string, input: MonitorInput): Promise<Re
 export async function setMonitorEnabled(id: string, enabled: boolean): Promise<Result> {
   const { org, user, can } = await requireOrg();
   if (!can({ monitor: ["update"] })) return { ok: false, error: "Your role can't pause or resume monitors." };
+  if (enabled) {
+    const [current] = await db
+      .select({ enabled: schema.monitor.enabled })
+      .from(schema.monitor)
+      .where(and(eq(schema.monitor.id, id), eq(schema.monitor.organizationId, org.id)))
+      .limit(1);
+    if (current && !current.enabled) {
+      const limit = await monitorLimitError(org.id);
+      if (limit) return { ok: false, error: limit };
+    }
+  }
   const [row] = await db
     .update(schema.monitor)
     .set({ enabled, ...(enabled ? { lastCheckedBlock: null, lastError: null } : {}) })
@@ -154,6 +175,7 @@ export async function createTelegramLink(): Promise<Result<{ url: string; groupU
 export async function createWebhook(input: { name: string; url: string }): Promise<Result<{ secret: string }>> {
   const { org, user, can } = await requireOrg();
   if (!can({ monitor: ["create"] })) return { ok: false, error: "Your role can't add webhooks." };
+  if (!(await getPlan(org.id)).limits.webhooks) return { ok: false, error: "Webhooks are available on the Pro and Team plans. Upgrade in Settings → Billing." };
   const name = input.name.trim();
   if (name.length < 2 || name.length > 60) return { ok: false, error: "Give the webhook a name between 2 and 60 characters." };
   const check = await checkWebhookUrl(input.url.trim());

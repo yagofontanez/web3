@@ -33,6 +33,12 @@ export type RequestLogEntry = {
   createdAt: Date;
 };
 
+export type QuotaResult = { used: number; limit: number; plan: string; resetsAt: Date };
+
+export type QuotaStore = {
+  consume(organizationId: string): Promise<QuotaResult | null>;
+};
+
 export type LogSink = {
   push(entry: RequestLogEntry): void;
 };

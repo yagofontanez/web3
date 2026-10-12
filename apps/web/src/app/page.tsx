@@ -4,6 +4,7 @@ import { BlockStrip } from "@/components/chain/block-strip";
 import { LiveGlyph } from "@/components/chain/live-glyph";
 import { LiveBlocksProvider } from "@/components/chain/use-live-blocks";
 import { ApiArtifact, ExplorerArtifact, MonitorArtifact, StudioArtifact } from "@/components/landing/showcase";
+import { formatLimit, PLANS } from "@w3s/billing/plans";
 import { Logo } from "@/components/logo";
 
 const features: { name: string; text: string; artifact: ReactNode }[] = [
@@ -36,6 +37,9 @@ export default function Home() {
         <header className="flex items-center justify-between py-6">
           <Logo />
           <nav className="flex items-center gap-5 text-sm">
+            <a href="#pricing" className="hidden text-muted hover:text-ink sm:inline">
+              Pricing
+            </a>
             <Link href="/sign-in" className="text-muted hover:text-ink">
               Sign in
             </Link>
@@ -97,10 +101,59 @@ export default function Home() {
             ))}
           </section>
 
+          <section id="pricing" aria-labelledby="pricing-title" className="flex scroll-mt-8 flex-col gap-8 border-t border-line pt-16 pb-20 sm:pt-20">
+            <div className="flex flex-col gap-2">
+              <h2 id="pricing-title" className="text-3xl font-semibold tracking-[-0.02em]">
+                Pricing
+              </h2>
+              <p className="max-w-[54ch] text-lg leading-relaxed text-muted">
+                Start free. Pay per organization, not per seat, once your team needs more requests and monitors.
+              </p>
+            </div>
+            <div className="grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-3 md:divide-x md:divide-line max-md:divide-y max-md:divide-line">
+              {Object.values(PLANS).map((p) => (
+                <div key={p.id} className={`flex flex-col gap-6 p-6 sm:p-8 ${p.id === "pro" ? "bg-verdigris-soft/40" : ""}`}>
+                  <div className="flex flex-col gap-1.5">
+                    <p className="flex items-center gap-2 font-semibold">
+                      {p.name}
+                      {p.id === "pro" ? <span className="rounded-full bg-verdigris px-2 py-0.5 text-xs font-medium text-white">Most teams</span> : null}
+                    </p>
+                    <p className="flex items-baseline gap-1">
+                      <span className="text-4xl font-semibold tracking-[-0.03em]">${p.priceUsd}</span>
+                      <span className="text-sm text-muted">/ month</span>
+                    </p>
+                    <p className="text-sm text-muted">{p.tagline}</p>
+                  </div>
+                  <ul className="flex flex-col gap-2.5 text-sm">
+                    <li>
+                      <span className="font-medium tabular-nums">{formatLimit(p.limits.apiRequestsPerMonth)}</span> API requests a month
+                    </li>
+                    <li>
+                      <span className="font-medium tabular-nums">{formatLimit(p.limits.monitors)}</span> active monitors
+                    </li>
+                    <li>
+                      <span className="font-medium tabular-nums">{formatLimit(p.limits.members)}</span> members
+                    </li>
+                    <li>{p.limits.webhooks ? "Telegram and signed webhook alerts" : "Telegram alerts"}</li>
+                  </ul>
+                  <Link
+                    href="/sign-up"
+                    className={`mt-auto rounded-md px-4 py-2.5 text-center text-sm font-medium ${
+                      p.id === "pro" ? "bg-ink text-paper hover:opacity-90" : "border border-line bg-paper hover:border-muted"
+                    }`}
+                  >
+                    {p.priceUsd ? `Start with ${p.name}` : "Start free"}
+                  </Link>
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-muted">Prices in USD. Explorer, contract studio, roles and the audit log are on every plan.</p>
+          </section>
+
           <section className="theme-dark deep-surface -mx-4 mb-16 flex flex-col items-start gap-6 rounded-none px-6 py-14 sm:mx-0 sm:rounded-2xl sm:px-12 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-2">
               <h2 className="text-3xl font-semibold tracking-[-0.02em] text-balance">Bring your team on-chain this week.</h2>
-              <p className="text-muted">Free while in early access. Your keys never leave your wallet.</p>
+              <p className="text-muted">Free to start. Your keys never leave your wallet.</p>
             </div>
             <Link href="/sign-up" className="shrink-0 rounded-md bg-ink px-5 py-3 text-sm font-medium text-paper hover:opacity-90">
               Create your workspace

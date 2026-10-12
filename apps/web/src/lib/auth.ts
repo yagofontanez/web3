@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
+import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { organization, siwe } from "better-auth/plugins";
@@ -9,6 +9,7 @@ import { db, schema } from "@w3s/db";
 import { getPublicClient } from "@w3s/chains";
 import { ac, roles } from "@w3s/shared/permissions";
 import { audit, type AuditEntry } from "./audit";
+import { getPlan, seatCount } from "./billing";
 
 const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
@@ -95,6 +96,12 @@ export const auth = betterAuth({
       invitationExpiresIn: 60 * 60 * 48,
       async sendInvitationEmail() {},
       organizationHooks: {
+        beforeCreateInvitation: async ({ organization }) => {
+          const plan = await getPlan(organization.id);
+          if (Number.isFinite(plan.limits.members) && (await seatCount(organization.id)) >= plan.limits.members) {
+            throw new APIError("FORBIDDEN", { message: `The ${plan.name} plan includes ${plan.limits.members} members, counting pending invitations. Upgrade in Settings → Billing.` });
+          }
+        },
         afterCreateOrganization: async ({ organization, user }) =>
           audit({ organizationId: organization.id, actorId: user.id, action: "organization.created" }),
         afterCreateInvitation: async ({ invitation, inviter, organization }) =>

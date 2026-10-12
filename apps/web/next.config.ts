@@ -3,8 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
-  transpilePackages: ["@w3s/db", "@w3s/shared", "@w3s/chains", "@w3s/explorer", "@w3s/notify", "@w3s/contracts"],
-  serverExternalPackages: ["postgres", "ioredis", "solc"],
+  transpilePackages: ["@w3s/db", "@w3s/shared", "@w3s/chains", "@w3s/explorer", "@w3s/notify", "@w3s/contracts", "@w3s/billing"],
+  serverExternalPackages: ["postgres", "ioredis", "solc", "stripe"],
   poweredByHeader: false,
   async headers() {
     return [

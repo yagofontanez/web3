@@ -1,0 +1,17 @@
+{
+  "name": "@w3s/billing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./plans": "./src/plans.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "setup-stripe": "tsx --env-file=../../.env scripts/setup-stripe.ts"
+  },
+  "dependencies": { "stripe": "23.0.0" },
+  "devDependencies": { "@types/node": "^22", "tsx": "^4", "typescript": "5.9.3", "vitest": "^4" }
+}

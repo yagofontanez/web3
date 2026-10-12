@@ -2,15 +2,18 @@ import { desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { db, schema } from "@w3s/db";
+import { effectivePlan, formatLimit, PLANS, stripeConfigured, type Plan } from "@w3s/billing";
 import { roles, statements, type OrgRole } from "@w3s/shared/permissions";
 import { OrgGlyph } from "@/components/org-glyph";
 import { SectionTabs } from "@/components/section-tabs";
+import { BillingButton, CheckoutWatcher } from "@/components/settings/billing";
 import { CopyField, DangerZone, NameField } from "@/components/settings/general";
 import { InvitationActions } from "@/components/settings/invitation-row";
 import { InviteForm } from "@/components/settings/invite-form";
 import { MemberMenu } from "@/components/settings/member-menu";
 import { ROLE_INFO, ROLE_ORDER } from "@/components/settings/roles";
 import { describeAudit } from "@/lib/audit-describe";
+import { activeMonitorCount, getSubscription, monthlyApiUsage, seatCount } from "@/lib/billing";
 import { requireOrg } from "@/lib/dal";
 import { sinceNow } from "@/lib/format";
 
@@ -20,6 +23,7 @@ type Props = PageProps<"/dashboard/settings">;
 
 const dateFmt = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 const dateTimeFmt = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" });
+const utcDateFmt = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: "UTC" });
 
 export default function SettingsPage({ searchParams }: Props) {
   return (
@@ -61,6 +65,7 @@ async function Tabs() {
     { id: "general", label: "General" },
     { id: "members", label: "Members", count: org.members.length },
     { id: "roles", label: "Roles" },
+    ...(can({ billing: ["read"] }) ? [{ id: "billing", label: "Billing" }] : []),
     ...(can({ audit: ["read"] }) ? [{ id: "audit", label: "Audit log" }] : []),
   ];
   return <SectionTabs tabs={tabs} label="Organization sections" fallback="general" />;
@@ -71,6 +76,7 @@ async function Body({ searchParams }: Pick<Props, "searchParams">) {
   if (tab === "members") return <Members />;
   if (tab === "roles") return <Roles />;
   if (tab === "audit") return <Audit />;
+  if (tab === "billing") return <Billing checkout={(await searchParams).checkout} />;
   return <General />;
 }
 
@@ -300,7 +306,7 @@ async function Audit() {
           {rows.map((r) => (
             <li key={r.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-6">
               <p className="text-sm">
-                <span className="font-medium">{r.actorName || r.actorEmail || "System"}</span>{" "}
+                <span className="font-medium">{r.actorName || r.actorEmail || (r.action.startsWith("billing.") ? "Stripe" : "System")}</span>{" "}
                 <span className="text-muted">{describeAudit(r.action, r.metadata)}</span>
               </p>
               <p className="flex items-baseline gap-3 text-xs text-muted sm:justify-end">
@@ -314,6 +320,179 @@ async function Audit() {
         </ol>
       )}
     </section>
+  );
+}
+
+const PLAN_ROWS: { label: string; value: (p: Plan) => string }[] = [
+  { label: "API requests a month", value: (p) => formatLimit(p.limits.apiRequestsPerMonth) },
+  { label: "Active monitors", value: (p) => formatLimit(p.limits.monitors) },
+  { label: "Members", value: (p) => formatLimit(p.limits.members) },
+  { label: "Webhook alerts", value: (p) => (p.limits.webhooks ? "Included" : "Telegram only") },
+];
+
+async function Billing({ checkout }: { checkout?: string | string[] }) {
+  const { org, can } = await requireOrg();
+  if (!can({ billing: ["read"] })) return <p className="text-sm text-muted">Your role can&apos;t see billing.</p>;
+  const canManage = can({ billing: ["update"] });
+  const [sub, apiUsed, monitors, seats] = await Promise.all([getSubscription(org.id), monthlyApiUsage(org.id), activeMonitorCount(org.id), seatCount(org.id)]);
+  const plan = effectivePlan(sub);
+  const subscribed = !!sub?.stripeSubscriptionId && ["active", "trialing", "past_due"].includes(sub.status);
+  const configured = stripeConfigured();
+  const now = new Date();
+  const resets = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+
+  return (
+    <div className="flex flex-col gap-12">
+      {checkout === "success" && !subscribed ? <CheckoutWatcher /> : null}
+      {checkout === "canceled" && !subscribed ? (
+        <p role="status" className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
+          Checkout was closed before paying. Nothing was charged.
+        </p>
+      ) : null}
+      {sub?.status === "past_due" ? (
+        <div role="alert" className="flex flex-col gap-3 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm sm:flex-row sm:items-center">
+          <p className="flex-1">
+            <span className="font-medium text-danger">The last payment failed.</span> Stripe will retry the card. Update it to keep the {plan.name} plan.
+          </p>
+          {canManage ? (
+            <BillingButton action={{ kind: "portal" }} variant="secondary">
+              Update payment method
+            </BillingButton>
+          ) : null}
+        </div>
+      ) : null}
+
+      <section aria-labelledby="current-plan" className="flex flex-col gap-4">
+        <h2 id="current-plan" className="text-lg font-semibold tracking-tight">
+          Current plan
+        </h2>
+        <div className="flex flex-col gap-5 rounded-xl border border-line bg-surface p-5 sm:flex-row sm:items-center">
+          <div className="flex flex-1 flex-col gap-1">
+            <p className="flex items-baseline gap-3">
+              <span className="text-2xl font-semibold tracking-[-0.02em]">{plan.name}</span>
+              <span className="text-sm text-muted">{plan.priceUsd ? `$${plan.priceUsd} a month` : "Free forever"}</span>
+            </p>
+            <p className="text-sm text-muted">
+              {!subscribed
+                ? `${sub ? "No active subscription." : "No card on file."} Upgrade when you need more requests, monitors or seats.`
+                : sub!.cancelAtPeriodEnd && sub!.currentPeriodEnd
+                  ? `Canceled. Stays on ${plan.name} until ${dateFmt.format(sub!.currentPeriodEnd)}, then moves to Free.`
+                  : sub!.currentPeriodEnd
+                    ? `Renews on ${dateFmt.format(sub!.currentPeriodEnd)}.`
+                    : "Active."}
+            </p>
+          </div>
+          {canManage && sub && configured ? (
+            <BillingButton action={{ kind: "portal" }} variant="secondary" className="sm:w-56">
+              Manage billing and invoices
+            </BillingButton>
+          ) : null}
+        </div>
+      </section>
+
+      <section aria-labelledby="usage" className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 id="usage" className="text-lg font-semibold tracking-tight">
+            Usage
+          </h2>
+          <p className="text-sm text-muted">API requests reset on {utcDateFmt.format(resets)}. Monitors and members count what&apos;s active right now.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Meter label="API requests this month" used={apiUsed} limit={plan.limits.apiRequestsPerMonth} />
+          <Meter label="Active monitors" used={monitors} limit={plan.limits.monitors} />
+          <Meter label="Members and invites" used={seats} limit={plan.limits.members} />
+        </div>
+      </section>
+
+      <section aria-labelledby="plans" className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 id="plans" className="text-lg font-semibold tracking-tight">
+            Plans
+          </h2>
+          <p className="text-sm text-muted">
+            {canManage
+              ? "Prices in USD, billed monthly through Stripe. Changing plans is prorated."
+              : "Only the owner can change the plan."}
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {Object.values(PLANS).map((p) => {
+            const current = p.id === plan.id;
+            return (
+              <article
+                key={p.id}
+                aria-current={current ? "true" : undefined}
+                className={`flex flex-col gap-5 rounded-xl border bg-surface p-5 ${current ? "border-verdigris ring-1 ring-verdigris" : "border-line"}`}
+              >
+                <div className="flex flex-col gap-1">
+                  <p className="flex items-center justify-between gap-3">
+                    <span className="font-semibold">{p.name}</span>
+                    {current ? <span className="rounded-full bg-verdigris-soft px-2 py-0.5 text-xs font-medium text-verdigris">Current</span> : null}
+                  </p>
+                  <p className="flex items-baseline gap-1">
+                    <span className="text-3xl font-semibold tracking-[-0.03em]">${p.priceUsd}</span>
+                    <span className="text-sm text-muted">/ month</span>
+                  </p>
+                  <p className="text-sm text-muted">{p.tagline}</p>
+                </div>
+                <dl className="flex flex-col divide-y divide-line border-y border-line text-sm">
+                  {PLAN_ROWS.map((r) => (
+                    <div key={r.label} className="flex justify-between gap-3 py-2">
+                      <dt className="text-muted">{r.label}</dt>
+                      <dd className="font-medium tabular-nums">{r.value(p)}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <div className="mt-auto">
+                  {!canManage || !configured || current ? null : p.id === "free" ? (
+                    subscribed && !sub!.cancelAtPeriodEnd ? (
+                      <BillingButton action={{ kind: "portal", flow: "cancel" }} variant="secondary">
+                        Downgrade to Free
+                      </BillingButton>
+                    ) : null
+                  ) : subscribed ? (
+                    <BillingButton action={{ kind: "portal", flow: "update" }} variant={p.priceUsd > plan.priceUsd ? "primary" : "secondary"}>
+                      Switch to {p.name}
+                    </BillingButton>
+                  ) : (
+                    <BillingButton action={{ kind: "checkout", plan: p.id }}>Upgrade to {p.name}</BillingButton>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+        {!configured ? <p className="text-sm text-muted">Billing isn&apos;t configured on this server, so plans can&apos;t be changed here.</p> : null}
+      </section>
+    </div>
+  );
+}
+
+const numberFmt = new Intl.NumberFormat("en");
+
+function Meter({ label, used, limit }: { label: string; used: number; limit: number }) {
+  const finite = Number.isFinite(limit);
+  const ratio = finite && limit > 0 ? Math.min(1, used / limit) : 0;
+  const tone = !finite ? "bg-verdigris" : ratio >= 1 ? "bg-danger" : ratio >= 0.8 ? "bg-amber" : "bg-verdigris";
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <p className="text-sm text-muted">{label}</p>
+      <p className="flex items-baseline gap-1.5">
+        <span className="text-2xl font-semibold tabular-nums tracking-[-0.02em]">{numberFmt.format(used)}</span>
+        <span className="text-sm text-muted">{finite ? `of ${numberFmt.format(limit)}` : "no limit"}</span>
+      </p>
+      <div
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={finite ? limit : undefined}
+        aria-valuenow={used}
+        className="h-1.5 overflow-hidden rounded-full bg-line/70"
+      >
+        {finite ? <div className={`h-full rounded-full ${tone}`} style={{ width: `${Math.max(ratio * 100, used > 0 ? 2 : 0)}%` }} /> : null}
+      </div>
+      {finite && ratio >= 1 ? <p className="text-xs text-danger">Limit reached.</p> : finite && ratio >= 0.8 ? <p className="text-xs text-amber">Close to the limit.</p> : null}
+    </div>
   );
 }
 
