@@ -6,3 +6,4 @@ export * from "./portfolio";
 export * from "./resolve";
 export * from "./events";
 export { rpc } from "./alchemy";
+export * from "./head";

@@ -54,7 +54,7 @@ Responses are cached in Redis (balances 60s, NFTs 5 min, activity 30s). Tokens w
 
 The worker scans every enabled monitor every 30 seconds from the block after its last checkpoint, so nothing is missed between scans and each match alerts once (unique on monitor and transfer or log id). Contract events are read with `eth_getLogs` in windows of `ALCHEMY_GETLOGS_RANGE` blocks (10 on Alchemy's free tier).
 
-Deliveries retry up to 6 times with exponential backoff starting at 15s. Webhooks carry `x-systema-signature: t=<unix>,v1=<hmac-sha256(secret, "t.body")>`; secrets are stored encrypted with AES-256-GCM. Webhook URLs must be https and public unless `ALLOW_PRIVATE_WEBHOOKS=true` (local development only).
+Deliveries are at-least-once: they retry up to 6 times with exponential backoff starting at 15s, and a worker that loses a job lock (for example after the machine sleeps) may send the same delivery again. Receivers should dedupe on the `x-systema-delivery` header. Webhooks carry `x-systema-signature: t=<unix>,v1=<hmac-sha256(secret, "t.body")>`; secrets are stored encrypted with AES-256-GCM. Webhook URLs must be https and public unless `ALLOW_PRIVATE_WEBHOOKS=true` (local development only).
 
 A scan that matches more than 25 times sends the first 5 plus a summary, and a monitor that sends over 200 alerts in an hour pauses itself and says why.
 

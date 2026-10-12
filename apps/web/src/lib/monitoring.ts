@@ -114,3 +114,42 @@ export async function monitoringSummary(organizationId: string) {
     .where(and(eq(schema.alert.organizationId, organizationId), gte(schema.delivery.createdAt, since(24 * 7))));
   return { monitors: monitors!, alerts24h: alerts!.total, deliveries: deliveries! };
 }
+
+export async function alertsHourly(monitorIds: string[], hours = 24) {
+  if (monitorIds.length === 0) return new Map<string, number[]>();
+  const rows = await db
+    .select({
+      monitorId: schema.alert.monitorId,
+      bucket: sql<number>`floor(extract(epoch from (now() - ${schema.alert.createdAt})) / 3600)`.mapWith(Number),
+      total: count(),
+    })
+    .from(schema.alert)
+    .where(and(inArray(schema.alert.monitorId, monitorIds), eq(schema.alert.test, false), gte(schema.alert.createdAt, since(hours))))
+    .groupBy(schema.alert.monitorId, sql`2`);
+  const out = new Map<string, number[]>();
+  for (const id of monitorIds) out.set(id, Array.from({ length: hours }, () => 0));
+  for (const r of rows) {
+    const series = out.get(r.monitorId);
+    if (series && r.bucket >= 0 && r.bucket < hours) series[hours - 1 - r.bucket] = r.total;
+  }
+  return out;
+}
+
+export async function monitorStats(monitorId: string) {
+  const [row] = await db
+    .select({
+      day: sql<number>`count(*) filter (where ${schema.alert.createdAt} >= now() - interval '24 hours' and not ${schema.alert.test})`.mapWith(Number),
+      week: sql<number>`count(*) filter (where ${schema.alert.createdAt} >= now() - interval '7 days' and not ${schema.alert.test})`.mapWith(Number),
+    })
+    .from(schema.alert)
+    .where(eq(schema.alert.monitorId, monitorId));
+  const [d] = await db
+    .select({
+      delivered: sql<number>`count(*) filter (where ${schema.delivery.status} = 'delivered')`.mapWith(Number),
+      failed: sql<number>`count(*) filter (where ${schema.delivery.status} = 'failed')`.mapWith(Number),
+    })
+    .from(schema.delivery)
+    .innerJoin(schema.alert, eq(schema.delivery.alertId, schema.alert.id))
+    .where(and(eq(schema.alert.monitorId, monitorId), gte(schema.delivery.createdAt, since(24 * 7))));
+  return { day: row?.day ?? 0, week: row?.week ?? 0, delivered: d?.delivered ?? 0, failed: d?.failed ?? 0 };
+}
