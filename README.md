@@ -25,6 +25,7 @@ packages/
   shared/   RBAC roles & permissions (shared by web, api, worker)
   explorer/ portfolio, NFT, activity, ENS and event decoding over Alchemy, Redis-cached
   notify/   alert formatting, Telegram delivery, signed webhooks, secret encryption
+  contracts/ Solidity templates, solc compiler with OpenZeppelin, ABI form helpers, Etherscan client
   chains/   supported chains, RPC clients
 ```
 
@@ -60,6 +61,21 @@ A scan that matches more than 25 times sends the first 5 plus a summary, and a m
 
 Telegram linking uses one-time `/start` codes that expire in 30 minutes. The worker long-polls the bot, guarded by a Redis lock so only one worker listens.
 
+## Contract studio
+
+Templates are generated from validated options (no user text reaches the source unescaped) and compiled with solc 0.8.37 against OpenZeppelin Contracts 5.6, EVM `cancun`, optimizer 200 runs. Custom Solidity can only import `@openzeppelin/contracts`. Deployments and writes are signed in the user's wallet; the server never holds keys. Studio deploys are limited to Sepolia and Base Sepolia, and verification uses the Etherscan v2 standard-JSON flow.
+
+To try deploys without test ETH, run a local node and point the studio at it:
+
+```bash
+npx hardhat node                 # in any folder with Hardhat 3 installed
+# .env
+STUDIO_LOCAL_RPC=http://127.0.0.1:8545
+NEXT_PUBLIC_STUDIO_LOCAL=true
+```
+
+`LOCAL_EVM_URL=http://127.0.0.1:8545 pnpm --filter @w3s/contracts test` also deploys every template to that node and exercises mint, burn, pause and ownership.
+
 ## Roles
 
 | Role | Can |
@@ -84,5 +100,5 @@ Permissions are defined once in `packages/shared/src/permissions.ts` and enforce
 - [x] **Phase 1: Explorer.** Multi-chain portfolio with USD values, NFTs with spam filtering, activity history, ENS, org-saved addresses
 - [x] **Phase 2: Developer hub.** Projects, HMAC-hashed API keys shown once, `/v1` REST API, per-key rate limits, request logs, usage charts, in-app reference
 - [x] **Phase 3: Monitors.** Wallet transfer and contract event rules, Telegram and HMAC-signed webhooks with retries, flood protection
-- [ ] **Phase 4: Contract studio.** OpenZeppelin templates, compile, deploy to testnets, ABI interaction, verification
+- [x] **Phase 4: Contract studio.** OpenZeppelin templates, solc compile, wallet deploys to testnets, ABI-driven read/write, Etherscan verification and import
 - [ ] **Phase 5: Billing.** Plans and quotas with Stripe

@@ -7,7 +7,6 @@ import { networkBySlug } from "@w3s/explorer";
 import { NetworkPulse } from "@/components/dashboard/network-pulse";
 import { AddressGlyph } from "@/components/explorer/address-glyph";
 import { SearchForm } from "@/components/explorer/search-form";
-import { Icon } from "@/components/icons";
 import { OrgGlyph } from "@/components/org-glyph";
 import { describeAudit } from "@/lib/audit-describe";
 import { requireOrg } from "@/lib/dal";
@@ -46,7 +45,6 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <ComingNext />
     </div>
   );
 }
@@ -328,30 +326,6 @@ async function Team() {
           {pending.length > 0 ? `${pending.length} ${pending.length === 1 ? "invitation is" : "invitations are"} waiting to be accepted.` : ""}
         </p>
       ) : null}
-    </section>
-  );
-}
-
-function ComingNext() {
-  const items = [
-    { icon: "contracts" as const, name: "Contract studio", text: "Deploy templates to testnets from your wallet." },
-  ];
-  return (
-    <section aria-labelledby="next" className="flex flex-col gap-4 border-t border-line pt-8">
-      <h2 id="next" className="text-sm font-medium text-muted">
-        Coming to this workspace
-      </h2>
-      <ul className="grid gap-6 sm:grid-cols-2">
-        {items.map((i) => (
-          <li key={i.name} className="flex gap-3">
-            <Icon name={i.icon} className="mt-0.5 shrink-0 text-muted" />
-            <span className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium">{i.name}</span>
-              <span className="text-sm text-muted">{i.text}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }

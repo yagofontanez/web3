@@ -1,0 +1,26 @@
+{
+  "name": "@w3s/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./templates": "./src/templates.ts",
+    "./abi": "./src/abi.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.6.1",
+    "solc": "0.8.37"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "5.9.3",
+    "vitest": "^4",
+    "viem": "2.57.4",
+    "zod": "4.6.5"
+  }
+}

@@ -45,6 +45,18 @@ export function describeAudit(action: string, meta: Record<string, unknown> | nu
       return `connected ${m.kind === "telegram" ? "the Telegram chat" : "the webhook"} ${m.name ?? ""}`.trim();
     case "channel.removed":
       return `removed the channel ${m.name ?? ""}`.trim();
+    case "contract.compiled":
+      return `compiled the contract ${m.name ?? ""}`.trim();
+    case "contract.imported":
+      return `imported the contract ${m.name ?? ""} from ${m.network ?? "a testnet"}`;
+    case "contract.deploy_submitted":
+      return `sent the deployment of ${m.name ?? "a contract"} to ${m.network ?? "a testnet"}`;
+    case "contract.deployed":
+      return `deployed ${m.name ?? "a contract"} on ${m.network ?? "a testnet"}`;
+    case "contract.verification_submitted":
+      return `submitted ${m.name ?? "a contract"} for source verification`;
+    case "contract.removed":
+      return `removed the contract ${m.name ?? ""} from the studio`.trim();
     default:
       return action;
   }

@@ -29,6 +29,13 @@
       "when": 1791731334609,
       "tag": "0003_flashy_valkyrie",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791841610158,
+      "tag": "0004_hard_chat",
+      "breakpoints": true
     }
   ]
 }
